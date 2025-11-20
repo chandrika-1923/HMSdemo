@@ -75,7 +75,7 @@ export default function DoctorLogin() {
           <div className="mt-3 text-sm text-slate-700">
             Admin Login? <Link to="/admin/login" className="text-indigo-600 hover:text-indigo-800">Click here</Link>
             <div className="mt-2">
-              <Link to="/forgot" className="text-slate-700 hover:text-indigo-700">Forgot password?</Link>
+              <Link to="/forgot?role=doctor" className="text-slate-700 hover:text-indigo-700">Forgot password?</Link>
             </div>
           </div>
         </div>

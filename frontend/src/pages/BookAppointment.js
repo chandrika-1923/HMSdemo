@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api";
 
@@ -10,6 +10,11 @@ export default function BookAppointment() {
   const [type, setType] = useState("offline");
   const [beneficiaryType, setBeneficiaryType] = useState("self");
   const [beneficiaryName, setBeneficiaryName] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) nav("/login");
+  }, [nav]);
 
   // Load available time slots
   const loadSlots = async () => {
@@ -28,6 +33,8 @@ export default function BookAppointment() {
   // Book appointment
   const bookSlot = async (slot) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) { nav("/login"); return; }
       const { data } = await API.post("/appointments", {
         doctorId: id,
         date,

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import DoctorLogin from "./pages/DoctorLogin";
@@ -23,24 +23,33 @@ import AdminAddDoctor from "./pages/AdminAddDoctor";
 import SearchDoctors from "./pages/SearchDoctors";
 
 
+function Header() {
+  const location = useLocation();
+  const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/doctor');
+  if (hideHeader) return null;
+  return (
+    <header className="bg-white border-b">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="text-lg font-semibold text-indigo-700">Prescripto</Link>
+          <nav className="flex items-center gap-6 text-slate-700">
+            <Link to="/" className="hover:text-indigo-600">Home</Link>
+            <Link to="/search" className="hover:text-indigo-600">All Doctors</Link>
+            <Link to="/about" className="hover:text-indigo-600">About</Link>
+            <Link to="/contact" className="hover:text-indigo-600">Contact</Link>
+            <Link to="/admin/login" className="hover:text-indigo-600">Admin</Link>
+          </nav>
+          <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full">Create Account</Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function App() {
 return (
 <BrowserRouter>
-<header className="bg-white border-b">
-  <div className="max-w-7xl mx-auto px-4">
-    <div className="flex items-center justify-between h-16">
-      <Link to="/" className="text-lg font-semibold text-indigo-700">Prescripto</Link>
-      <nav className="flex items-center gap-6 text-slate-700">
-        <Link to="/" className="hover:text-indigo-600">Home</Link>
-        <Link to="/search" className="hover:text-indigo-600">All Doctors</Link>
-        <Link to="/about" className="hover:text-indigo-600">About</Link>
-        <Link to="/contact" className="hover:text-indigo-600">Contact</Link>
-        <Link to="/admin/login" className="hover:text-indigo-600">Admin</Link>
-      </nav>
-      <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full">Create Account</Link>
-    </div>
-  </div>
-</header>
+<Header />
 
 
 <div className="p-6 bg-slate-50 min-h-screen">

@@ -12,6 +12,7 @@ export default function DoctorDetails() {
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const nav = useNavigate();
+  const isLoggedIn = !!localStorage.getItem("token");
 
   useEffect(() => {
     API.get(`/doctors`, { params: { user: id } }).then((res) => setDoctor(res.data[0]));
@@ -129,10 +130,8 @@ export default function DoctorDetails() {
 
           <button
             onClick={async () => {
-              if (!selectedDate || !selectedSlot) {
-                nav(`/book/${doctor?.user?._id}`);
-                return;
-              }
+              if (!isLoggedIn) { nav('/login'); return; }
+              if (!selectedDate || !selectedSlot) { nav(`/book/${doctor?.user?._id}`); return; }
               try {
                 const { data } = await API.post("/appointments", {
                   doctorId: doctor?.user?._id,
@@ -149,7 +148,7 @@ export default function DoctorDetails() {
             }}
             className="bg-indigo-600 hover:bg-indigo-700 text-white w-full md:w-auto px-6 py-3 rounded-full"
           >
-            Book an appointment
+            {isLoggedIn ? "Book an appointment" : "Login to book"}
           </button>
         </div>
       </div>

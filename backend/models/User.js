@@ -8,6 +8,8 @@ phone: { type: String },
 passwordHash: { type: String, required: true },
 role: { type: String, enum: ['patient','doctor','admin'], default: 'patient' },
 isDoctorApproved: { type: Boolean, default: false },
+resetOtp: { type: String },
+resetOtpExpires: { type: Date },
 }, { timestamps: true });
 
 

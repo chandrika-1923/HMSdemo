@@ -60,7 +60,7 @@ return (
       <div className="text-center mt-4">
         <a href="/register" className="text-indigo-700 hover:text-indigo-900">Create an account</a>
         <div className="mt-2">
-          <a href="/forgot" className="text-slate-700 hover:text-indigo-700">Forgot password?</a>
+          <a href="/forgot?role=patient" className="text-slate-700 hover:text-indigo-700">Forgot password?</a>
         </div>
       </div>
     </div>

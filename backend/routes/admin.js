@@ -61,8 +61,12 @@ router.post('/doctors', authenticate, authorize(['admin']), async (req, res) => 
   });
 
   try {
-    if (user.email) await sendMail(user.email, 'Your Doctor Account', `Your account has been created. Email: ${user.email}`);
-  } catch (e) {}
+    if (user.email) {
+      const loginUrl = `${process.env.FRONTEND_URL || ''}/doctor/login`;
+      const body = `Your doctor account has been created.\nEmail: ${user.email}\nPassword: ${String(password).trim()}\nLogin: ${loginUrl}`;
+      await sendMail(user.email, 'Your Doctor Account Credentials', body);
+    }
+  } catch (e) { console.error('Email send error', e); }
 
   res.json({
     user: { id: user._id, name: user.name, email: user.email, role: user.role },
