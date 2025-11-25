@@ -4,11 +4,25 @@ import API from "../api";
 
 const SPECIALTIES = [
   "General Physician",
-  "Gynecologist",
   "Dermatologist",
+  "Gynecologist",
   "Pediatrician",
-  "Neurologist",
+  "Orthopedic Surgeon",
   "Cardiologist",
+  "Neurologist",
+  "Gastroenterologist",
+  "ENT Specialist",
+  "Dentist",
+  "Psychiatrist",
+  "Diabetologist",
+  "Endocrinologist",
+  "Pulmonologist",
+  "Nephrologist",
+  "Urologist",
+  "Ophthalmologist",
+  "Oncologist",
+  "Rheumatologist",
+  "Physiotherapist",
 ];
 
 export default function SearchDoctors() {
@@ -23,6 +37,10 @@ export default function SearchDoctors() {
 
   const getOnlineStatus = (id) => {
     const v = localStorage.getItem(`doctorOnlineById_${id}`);
+    return v === "1";
+  };
+  const getBusyStatus = (id) => {
+    const v = localStorage.getItem(`doctorBusyById_${id}`);
     return v === "1";
   };
 
@@ -77,6 +95,46 @@ export default function SearchDoctors() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
+  useEffect(() => {
+    const iv = setInterval(() => { search(); }, 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, specialization]);
+
+  useEffect(() => {
+    const cleanup = [];
+    const initSocket = () => {
+      const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
+      const w = window;
+      const onReady = () => {
+        try {
+          const socket = w.io ? w.io(origin, { transports: ["websocket", "polling"] }) : null;
+          if (socket) {
+            socket.on('doctor:status', (p) => {
+              const did = String(p?.doctorId || "");
+              if (!did) return;
+              setList((prev) => prev.map((d) => (
+                String(d?.user?._id || "") === did ? { ...d, isOnline: !!p.isOnline, isBusy: !!p.isBusy } : d
+              )));
+            });
+            cleanup.push(() => { try { socket.close(); } catch(_) {} });
+          }
+        } catch (_) {}
+      };
+      if (!w.io) {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+        s.onload = onReady;
+        document.body.appendChild(s);
+        cleanup.push(() => { try { document.body.removeChild(s); } catch(_) {} });
+      } else {
+        onReady();
+      }
+    };
+    initSocket();
+    return () => { cleanup.forEach((fn) => fn()); };
+  }, []);
+
   if (isAdmin) {
     return (
       <div className="max-w-7xl mx-auto mt-8 px-4">
@@ -118,14 +176,22 @@ export default function SearchDoctors() {
                     <div className="w-full h-56 bg-white" />
                   )}
                   <div className="absolute top-2 right-2">
-                    <span className={`inline-block text-xs px-2 py-1 rounded ${getOnlineStatus(d.user._id) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {getOnlineStatus(d.user._id) ? 'Online' : 'Offline'}
-                    </span>
+                  {(() => {
+                      const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
+                      const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
+                      if (online === null && busy === null) return null;
+                      const cls = busy ? 'bg-amber-100 text-amber-700' : (online ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+                      const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
+                      return <span className={`inline-block text-xs px-2 py-1 rounded ${cls}`}>{txt}</span>;
+                    })()}
                   </div>
                   </div>
                   <div className="p-4">
                     <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
                     <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
+                    {typeof d.consultationFees === 'number' && (
+                      <div className="text-sm text-slate-700">Fee: ₹{d.consultationFees}</div>
+                    )}
                     <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
                   </div>
                 </div>
@@ -197,10 +263,23 @@ export default function SearchDoctors() {
                   ) : (
                     <div className="w-full h-56 bg-white" />
                   )}
+                  <div className="absolute top-2 right-2">
+                    {(() => {
+                      const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
+                      const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
+                      if (online === null && busy === null) return null;
+                      const cls = busy ? 'bg-amber-100 text-amber-700' : (online ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+                      const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
+                      return <span className={`inline-block text-xs px-2 py-1 rounded ${cls}`}>{txt}</span>;
+                    })()}
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
                   <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
+                  {typeof d.consultationFees === 'number' && (
+                    <div className="text-sm text-slate-700">Fee: ₹{d.consultationFees}</div>
+                  )}
                   <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
                 </div>
               </div>

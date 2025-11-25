@@ -46,5 +46,22 @@ await profile.save();
 res.json(profile);
 });
 
+// Protected: update online/busy status (doctor user)
+router.put('/me/status', authenticate, async (req, res) => {
+  const user = req.user;
+  if (user.role !== 'doctor') return res.status(403).json({ message: 'Only doctors' });
+  const { isOnline, isBusy } = req.body || {};
+  let profile = await DoctorProfile.findOne({ user: user._id });
+  if (!profile) profile = new DoctorProfile({ user: user._id });
+  if (typeof isOnline === 'boolean') profile.isOnline = isOnline;
+  if (typeof isBusy === 'boolean') profile.isBusy = isBusy;
+  await profile.save();
+  try {
+    const io = req.app.get('io');
+    if (io) io.emit('doctor:status', { doctorId: String(user._id), isOnline: !!profile.isOnline, isBusy: !!profile.isBusy });
+  } catch (e) {}
+  res.json({ isOnline: profile.isOnline, isBusy: profile.isBusy });
+});
+
 
 module.exports = router;

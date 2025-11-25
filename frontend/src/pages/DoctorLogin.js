@@ -24,6 +24,10 @@ export default function DoctorLogin() {
       } else {
         localStorage.setItem("token", data.token);
         if (data?.user?.id) localStorage.setItem("userId", data.user.id);
+        try {
+          const uid = String(data?.user?.id || "");
+          if (uid) localStorage.setItem('userId', uid);
+        } catch (_) {}
         nav("/doctor/dashboard");
       }
     } catch (err) {

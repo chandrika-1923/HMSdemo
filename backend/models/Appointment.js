@@ -10,11 +10,13 @@ endTime: { type: String, required: true },
 type: { type: String, enum: ['online','offline'], default: 'offline' },
 status: { type: String, enum: ['PENDING','CONFIRMED','CANCELLED','COMPLETED','NO_SHOW'], default: 'PENDING' },
 paymentStatus: { type: String, enum: ['PAID','PENDING','FAILED'], default: 'PENDING' },
-fee: { type: Number },
-beneficiaryType: { type: String, enum: ['self','family'], default: 'self' },
-beneficiaryName: { type: String },
-meetingLink: { type: String },
-prescriptionText: { type: String }
+  fee: { type: Number },
+  beneficiaryType: { type: String, enum: ['self','family'], default: 'self' },
+  beneficiaryName: { type: String },
+  meetingLink: { type: String },
+  prescriptionText: { type: String },
+  patientSymptoms: { type: String },
+  patientSummary: { type: String }
 }, { timestamps: true });
 
 

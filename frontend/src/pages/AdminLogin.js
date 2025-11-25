@@ -19,8 +19,12 @@ export default function AdminLogin() {
         email: email.trim(),
         password: password.trim(),
       });
-      localStorage.setItem("token", data.token);
-      nav("/admin/dashboard");
+      if (data?.user?.role !== "admin") {
+        setError("Only admin can login here");
+      } else {
+        localStorage.setItem("token", data.token);
+        nav("/admin/dashboard");
+      }
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {

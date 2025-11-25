@@ -31,6 +31,47 @@ export default function Home() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      try {
+        const { data } = await API.get('/doctors');
+        setList(Array.isArray(data) ? data : []);
+      } catch (_) {}
+    }, 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    const cleanup = [];
+    const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
+    const w = window;
+    const onReady = () => {
+      try {
+        const socket = w.io ? w.io(origin, { transports: ["websocket", "polling"] }) : null;
+        if (socket) {
+          socket.on('doctor:status', (p) => {
+            const did = String(p?.doctorId || "");
+            if (!did) return;
+            setList((prev) => prev.map((d) => (
+              String(d?.user?._id || "") === did ? { ...d, isOnline: !!p.isOnline, isBusy: !!p.isBusy } : d
+            )));
+          });
+          cleanup.push(() => { try { socket.close(); } catch(_) {} });
+        }
+      } catch (_) {}
+    };
+    if (!w.io) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+      s.onload = onReady;
+      document.body.appendChild(s);
+      cleanup.push(() => { try { document.body.removeChild(s); } catch(_) {} });
+    } else {
+      onReady();
+    }
+    return () => { cleanup.forEach((fn) => fn()); };
+  }, []);
   return (
     <div className="min-h-screen bg-white">
       <section className="bg-indigo-600/90">
@@ -96,28 +137,65 @@ export default function Home() {
           <p className="text-slate-600 text-center mt-2">Simply browse through our extensive list of trusted doctors.</p>
           {error && <div className="text-center text-sm text-red-600 mt-3">{error}</div>}
           <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {list.map((d) => (
-              <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
-                <div className="relative">
-                  {String(d.photoBase64 || "").startsWith("data:image") ? (
-                    <img
-                      src={d.photoBase64}
-                      alt="Doctor"
-                      className="w-full h-56 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-56 bg-white" />
-                  )}
+            {(() => {
+              const getExp = (d) => {
+                const v = d.experienceYears ?? d.experience ?? d.years;
+                const n = Number(v);
+                return Number.isFinite(n) ? n : 0;
+              };
+              const getRating = (d) => {
+                const r = d.ratingAvg ?? d.rating ?? (d.ratings && d.ratings.avg) ?? (d.reviews && d.reviews.avg);
+                const n = Number(r);
+                return Number.isFinite(n) ? n : null;
+              };
+              const filtered = (list || []).filter((d) => {
+                const expOk = getExp(d) >= 3;
+                const rating = getRating(d);
+                const ratingOk = rating === null ? true : rating >= 4;
+                return expOk && ratingOk;
+              }).sort((a, b) => {
+                const ea = getExp(a); const eb = getExp(b);
+                const ra = getRating(a) ?? 0; const rb = getRating(b) ?? 0;
+                if (rb !== ra) return rb - ra;
+                return eb - ea;
+              });
+              return filtered.map((d) => (
+                <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
+                  <div className="relative">
+                    {String(d.photoBase64 || "").startsWith("data:image") ? (
+                      <img
+                        src={d.photoBase64}
+                        alt="Doctor"
+                        className="w-full h-56 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-56 bg-white" />
+                    )}
+                    <div className="absolute top-2 right-2">
+                      {(() => {
+                        const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
+                        const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
+                        if (online === null && busy === null) return null;
+                        const cls = busy ? 'bg-amber-100 text-amber-700' : (online ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+                        const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
+                        return <span className={`inline-block text-xs px-2 py-1 rounded ${cls}`}>{txt}</span>;
+                      })()}
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
+                    <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
+                    <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
-                  <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</p>
-                  <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
-                </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         </div>
+      </section>
+
+      <section>
+        <div className="hidden" aria-hidden="true" />
       </section>
       <section>
         <div className="max-w-7xl mx-auto px-4 py-10">

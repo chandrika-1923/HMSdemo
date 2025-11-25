@@ -21,12 +21,7 @@ router.get("/slots/:doctorId", async (req, res) => {
         return res.status(404).json({ message: "Doctor profile not found" });
 
     const day = new Date(date).getDay(); // 0-6 (Sun-Sat)
-    let todaysAvailability = profile.weeklyAvailability.filter(a => a.day === day);
-
-    // Fallback availability if none configured for the day: 09:00-17:00
-    if (!todaysAvailability || todaysAvailability.length === 0) {
-        todaysAvailability = [{ day, from: "09:00", to: "17:00" }];
-    }
+    let todaysAvailability = [{ day, from: "10:00", to: "22:00" }];
 
     const duration = profile.slotDurationMins || 15;
     const slotsMap = generateSlots(todaysAvailability, duration);
@@ -83,12 +78,28 @@ router.post("/", authenticate, async (req, res) => {
         beneficiaryName: beneficiaryName || undefined
     });
 
-    if (appointment.type === "online") {
-        appointment.meetingLink = `https://meet.jit.si/doctorconnect-${appointment._id}`;
-        await appointment.save();
-    }
+    // Do not auto-generate Google Meet link; doctor will set a real link
 
     res.json(appointment);
+});
+
+// Set or update meeting link and notify patient (doctor only)
+router.put('/:id/meet-link', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { url } = req.body || {};
+  if (!id || !url || typeof url !== 'string') return res.status(400).json({ message: 'id and url required' });
+  const link = String(url).replace(/[`'\"]/g, '').trim();
+  if (!link.includes('meet.google.com') || link.endsWith('/new')) return res.status(400).json({ message: 'Invalid Google Meet link' });
+  const appt = await Appointment.findById(id).populate('patient', 'email name');
+  if (!appt) return res.status(404).json({ message: 'Appointment not found' });
+  if (req.user.role !== 'doctor' || String(appt.doctor) !== String(req.user._id)) return res.status(403).json({ message: 'Only the doctor can set link' });
+  appt.meetingLink = link;
+  await appt.save();
+  try {
+    const email = appt.patient?.email;
+    if (email) await sendMail(email, 'Join Meeting', `Doctor has started your consultation. Join here: ${link}`);
+  } catch (e) {}
+  res.json({ ok: true });
 });
 
 router.post("/:id/pay", authenticate, async (req, res) => {
@@ -196,6 +207,45 @@ router.post("/:id/prescription", authenticate, async (req, res) => {
   try {
     if (appt.patient.email) await sendMail(appt.patient.email, "Prescription Available", `Your prescription is ready: ${url}`);
   } catch (e) {}
+  res.json({ ok: true });
+});
+
+// Patient adds or updates details for online consultation
+router.put("/:id/patient-details", authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { symptoms, summary, date, startTime, doctorId } = req.body || {};
+  let appt = null;
+  try {
+    if (id && id !== 'undefined') {
+      appt = await Appointment.findById(id);
+    }
+  } catch (_) { appt = null; }
+  if (!appt) {
+    const filter = { patient: req.user._id };
+    if (doctorId) filter.doctor = doctorId;
+    if (date) filter.date = String(date);
+    if (startTime) filter.startTime = String(startTime);
+    appt = await Appointment.findOne(filter);
+  }
+  if (!appt) return res.status(404).json({ message: "Appointment not found" });
+  appt.patientSymptoms = typeof symptoms === 'string' ? symptoms : appt.patientSymptoms;
+  appt.patientSummary = typeof summary === 'string' ? summary : appt.patientSummary;
+  await appt.save();
+  res.json({ ok: true });
+});
+
+// Fallback without id
+router.put("/patient-details", authenticate, async (req, res) => {
+  const { symptoms, summary, date, startTime, doctorId } = req.body || {};
+  const filter = { patient: req.user._id };
+  if (doctorId) filter.doctor = doctorId;
+  if (date) filter.date = String(date);
+  if (startTime) filter.startTime = String(startTime);
+  const appt = await Appointment.findOne(filter);
+  if (!appt) return res.status(404).json({ message: "Appointment not found" });
+  appt.patientSymptoms = typeof symptoms === 'string' ? symptoms : appt.patientSymptoms;
+  appt.patientSummary = typeof summary === 'string' ? summary : appt.patientSummary;
+  await appt.save();
   res.json({ ok: true });
 });
 

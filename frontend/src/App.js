@@ -29,7 +29,7 @@ function Header() {
   const location = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
-  const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/doctor');
+  const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/doctor') || location.pathname.startsWith('/prescription');
   const token = localStorage.getItem('token');
   const uid = localStorage.getItem('userId');
   const photo = uid ? localStorage.getItem(`userPhotoBase64ById_${uid}`) : '';
@@ -66,6 +66,7 @@ function Header() {
                 <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-md shadow-md text-sm">
                   <Link to="/profile" className="block px-3 py-2 hover:bg-slate-50">My Profile</Link>
                   <Link to="/appointments" className="block px-3 py-2 hover:bg-slate-50">My Appointments</Link>
+                  <Link to="/appointments" className="block px-3 py-2 hover:bg-slate-50">Prescriptions</Link>
                   <button
                     onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); nav('/login'); }}
                     className="block w-full text-left px-3 py-2 hover:bg-slate-50"

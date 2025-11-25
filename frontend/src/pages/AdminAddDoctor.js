@@ -11,6 +11,7 @@ export default function AdminAddDoctor() {
     specializations: "",
     clinic: "",
     city: "",
+    address: "",
     fees: "",
     slotDurationMins: "15",
     experienceYears: "",
@@ -34,6 +35,7 @@ export default function AdminAddDoctor() {
         specializations: form.specializations,
         clinic: form.clinic,
         city: form.city,
+        address: form.address,
         fees: form.fees,
         slotDurationMins: form.slotDurationMins,
         experienceYears: form.experienceYears ? Number(form.experienceYears) : undefined,
@@ -43,7 +45,7 @@ export default function AdminAddDoctor() {
       };
       await API.post("/admin/doctors", payload);
       alert("Doctor created successfully.");
-      setForm({ name: "", email: "", phone: "", specializations: "", clinic: "", city: "", fees: "", slotDurationMins: "15", experienceYears: "", about: "", password: "", photoBase64: "" });
+      setForm({ name: "", email: "", phone: "", specializations: "", clinic: "", city: "", address: "", fees: "", slotDurationMins: "15", experienceYears: "", about: "", password: "", photoBase64: "" });
       nav("/admin/doctors");
     } catch (err) {
       alert(err.response?.data?.message || err.message || "Failed to create doctor");
@@ -96,6 +98,26 @@ export default function AdminAddDoctor() {
               "Pediatrician",
               "Neurologist",
               "Cardiologist",
+              "Dermatologist",
+               "eneral Physician",
+              "Gynecologist",
+              "Pediatrician",
+              "Orthopedic Surgeon",
+              "Cardiologist",
+              "Neurologist",
+            "Gastroenterologist",
+             "ENT Specialist",
+             "Dentist",
+            "Psychiatrist",
+            "Diabetologist",
+            "Endocrinologist",
+            "Pulmonologist",
+            "Nephrologist",
+            "Urologist",
+            "Ophthalmologist",
+            "Oncologist",
+            "Rheumatologist",
+            "Physiotherapist" 
             ];
             return (
               <select
@@ -129,6 +151,9 @@ export default function AdminAddDoctor() {
               <input name="city" value={form.city} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="City" />
             </div>
           </div>
+
+          <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+          <textarea name="address" value={form.address} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="Clinic address" rows={3} />
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div>

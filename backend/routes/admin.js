@@ -52,7 +52,7 @@ router.post('/doctors', authenticate, authorize(['admin']), async (req, res) => 
   const profile = await DoctorProfile.create({
     user: user._id,
     specializations: specs,
-    clinic: { name: clinic || '', city: city || '' },
+    clinic: { name: clinic || '', address: (req.body.address || ''), city: city || '' },
     consultationFees: fees ? Number(fees) : undefined,
     slotDurationMins: slotDurationMins ? Number(slotDurationMins) : undefined,
     experienceYears: experienceYears ? Number(experienceYears) : undefined,

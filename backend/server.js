@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 
 process.on('unhandledRejection', (err) => {
@@ -27,6 +29,21 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 connectDB();
 
+// Create HTTP server and Socket.IO instance
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+  }
+});
+
+io.on('connection', (socket) => {
+  socket.on('disconnect', () => {});
+});
+
+app.set('io', io);
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
@@ -38,4 +55,4 @@ app.get('/', (req, res) => res.send('DoctorConnect API'));
 
 
 const PORT = 5000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+server.listen(PORT, () => console.log(`Server listening on ${PORT}`));

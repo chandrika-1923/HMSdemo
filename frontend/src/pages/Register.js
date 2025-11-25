@@ -10,6 +10,7 @@ export default function Register() {
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [dob, setDob] = useState("");
+  const [address, setAddress] = useState("");
   const [photoBase64, setPhotoBase64] = useState("");
   const role = "patient";
 
@@ -33,6 +34,7 @@ export default function Register() {
       if (uid && res.data?.user?.email) localStorage.setItem(`userEmailById_${uid}`, res.data.user.email);
       if (uid && photoBase64) localStorage.setItem(`userPhotoBase64ById_${uid}`, photoBase64);
       if (uid && phone) localStorage.setItem(`userPhoneById_${uid}`, phone);
+      if (uid && address) localStorage.setItem(`userAddressById_${uid}`, address);
       if (uid && gender) localStorage.setItem(`userGenderById_${uid}`, gender);
       if (uid && age) localStorage.setItem(`userAgeById_${uid}`, age);
       if (uid && dob) localStorage.setItem(`userDobById_${uid}`, dob);
@@ -47,7 +49,6 @@ export default function Register() {
     <div className="max-w-md mx-auto pt-16">
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent">Create Account</h1>
-        <p className="text-slate-600 mt-1">Join DoctorConnect</p>
       </div>
       <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200 transition-shadow duration-200 hover:shadow-xl">
         <form onSubmit={submit}>
@@ -92,6 +93,14 @@ export default function Register() {
             placeholder="Phone Number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+          />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+          <textarea
+            rows={3}
+            className="border border-slate-300 rounded-md p-2 w-full mb-3 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+            placeholder="Address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
           />
           <div className="grid sm:grid-cols-2 gap-3">
             <div>

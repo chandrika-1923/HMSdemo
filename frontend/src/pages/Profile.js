@@ -24,21 +24,38 @@ export default function Profile() {
   };
 
   useEffect(() => {
-    const uid = localStorage.getItem("userId");
+    const tryGetUid = () => {
+      const direct = localStorage.getItem("userId");
+      if (direct) return direct;
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i) || "";
+          if (key.startsWith("userNameById_")) return key.replace("userNameById_", "");
+          if (key.startsWith("userEmailById_")) return key.replace("userEmailById_", "");
+          if (key.startsWith("userPhoneById_")) return key.replace("userPhoneById_", "");
+        }
+      } catch (_) {}
+      return null;
+    };
+
+    const uid = tryGetUid();
     const n = uid ? localStorage.getItem(`userNameById_${uid}`) : null;
     const e = uid ? localStorage.getItem(`userEmailById_${uid}`) : null;
     const p = uid ? localStorage.getItem(`userPhoneById_${uid}`) : null;
     const a = uid ? localStorage.getItem(`userAddressById_${uid}`) : null;
     const g = uid ? localStorage.getItem(`userGenderById_${uid}`) : null;
-    const b = uid ? localStorage.getItem(`userBirthdayById_${uid}`) : null;
+    const b1 = uid ? localStorage.getItem(`userBirthdayById_${uid}`) : null;
+    const b2 = uid ? localStorage.getItem(`userDobById_${uid}`) : null;
     const ag = uid ? localStorage.getItem(`userAgeById_${uid}`) : null;
     const byId = uid ? localStorage.getItem(`userPhotoBase64ById_${uid}`) : null;
+
     setName(n || "");
     setEmail(e || "");
     setPhone(p || "");
     setAddress(a || "");
     setGender(g || "");
-    setBirthday(b || "");
+    const dobVal = b1 || b2 || "";
+    setBirthday(dobVal);
     setAge(ag || "");
     setPhoto(byId || "");
   }, []);
@@ -52,6 +69,7 @@ export default function Profile() {
       localStorage.setItem(`userAddressById_${uid}`, address || "");
       localStorage.setItem(`userGenderById_${uid}`, gender || "");
       localStorage.setItem(`userBirthdayById_${uid}`, birthday || "");
+      localStorage.setItem(`userDobById_${uid}`, birthday || "");
       localStorage.setItem(`userAgeById_${uid}`, age || "");
       localStorage.setItem(`userPhotoBase64ById_${uid}`, photo || "");
     }

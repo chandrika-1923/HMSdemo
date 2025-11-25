@@ -16,8 +16,10 @@ city: String
 },
 consultationFees: Number,
 languages: [String],
-weeklyAvailability: [{ day: Number, from: String, to: String }],
-slotDurationMins: { type: Number, default: 15 }
+ weeklyAvailability: [{ day: Number, from: String, to: String }],
+ slotDurationMins: { type: Number, default: 15 },
+ isOnline: { type: Boolean },
+ isBusy: { type: Boolean }
 }, { timestamps: true });
 
 
