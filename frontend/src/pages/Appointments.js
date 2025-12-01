@@ -6,7 +6,12 @@ import API from "../api";
 export default function Appointments() {
   const nav = useNavigate();
   const location = useLocation();
-  const isPrescriptionsView = false;
+  const isPrescriptionsView = (() => {
+    try {
+      const q = new URLSearchParams(location.search);
+      return String(q.get('view') || '').toLowerCase() === 'prescriptions';
+    } catch (_) { return false; }
+  })();
   const [list, setList] = useState([]);
   const [presRefresh, setPresRefresh] = useState(0);
   const presItems = useMemo(() => {
@@ -42,6 +47,8 @@ export default function Appointments() {
   const [waitText, setWaitText] = useState("");
   const [waitFiles, setWaitFiles] = useState([]);
   const meetChanRef = useRef(null);
+  const meetWinRef = useRef({});
+  const meetMonitorRef = useRef({});
   const [followAppt, setFollowAppt] = useState(null);
   const [fuChat, setFuChat] = useState([]);
   const [fuText, setFuText] = useState("");
@@ -167,30 +174,7 @@ export default function Appointments() {
     const onFocus = () => {
       API.get("/appointments/mine").then((res) => {
         const arr = Array.isArray(res.data) ? res.data : [];
-        try {
-          const now = Date.now();
-          const reset = arr.map((a) => {
-            try {
-              const d = new Date(a.date);
-              const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-              d.setHours(sh, sm, 0, 0);
-              const end = new Date(a.date);
-              const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-              end.setHours(eh, em, 0, 0);
-              const active = now >= d.getTime() && now < end.getTime();
-              const id = String(a._id || a.id || '');
-              const joined = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
-              if (joined) {
-                try { localStorage.setItem(`joinedByPatient_${id}`, '0'); } catch(_) {}
-              }
-              if (String(a.status).toUpperCase() === 'JOINED' && active) {
-                return { ...a, status: 'CONFIRMED' };
-              }
-            } catch (_) {}
-            return a;
-          });
-          setList(reset);
-        } catch (_) { setList(arr); }
+        setList(arr);
       }).catch(() => {});
     };
     window.addEventListener('focus', onFocus);
@@ -759,23 +743,68 @@ export default function Appointments() {
                                     try {
                                       const idX = String(a._id || a.id);
                                       localStorage.setItem(`joinedByPatient_${idX}`, '1');
-                                      setList((prev) => prev.slice());
+                                      setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'JOINED' } : x)));
                                     } catch(_) {}
                                     const win = window.open(url, '_blank');
+                                    try { meetWinRef.current[id] = win; } catch(_) {}
                                     try { socketRef.current && socketRef.current.emit('meet:update', { apptId: String(a._id || a.id), actor: 'patient', event: 'join' }); } catch(_) {}
                                     try {
                                       const idX = String(a._id || a.id);
                                       const monitor = setInterval(() => {
+                                        const end = new Date(a.date);
+                                        const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                                        end.setHours(eh, em, 0, 0);
+                                        const now = Date.now();
+                                        const expired = now >= end.getTime();
+                                        if (expired) {
+                                          try {
+                                            localStorage.setItem(`joinedByPatient_${idX}`, '0');
+                                            setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'COMPLETED' } : x)));
+                                          } catch(_) {}
+                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: 'complete' }); } catch(_) {}
+                                          try {
+                                            const w = meetWinRef.current[idX];
+                                            if (w && !w.closed) w.close();
+                                            meetWinRef.current[idX] = null;
+                                          } catch(_) {}
+                                          clearInterval(monitor);
+                                          meetMonitorRef.current[idX] = null;
+                                          return;
+                                        }
                                         if (!win || win.closed) {
                                           clearInterval(monitor);
-                                          try { localStorage.setItem(`joinedByPatient_${idX}`, '0'); setList((prev) => prev.slice()); } catch(_) {}
+                                          meetMonitorRef.current[idX] = null;
+                                          try { localStorage.setItem(`joinedByPatient_${idX}`, '0'); setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'CONFIRMED' } : x))); } catch(_) {}
                                           try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: 'exit' }); } catch(_) {}
                                         }
                                       }, 1000);
+                                      meetMonitorRef.current[idX] = monitor;
                                     } catch(_) {}
                                   };
                                   if (joined) {
-                                    return <button disabled className="border border-slate-200 text-slate-400 px-3 py-1 rounded-md cursor-not-allowed">Joined</button>;
+                                    return (
+                                      <button
+                                        onClick={() => {
+                                          try {
+                                            const idX = String(a._id || a.id);
+                                            localStorage.setItem(`joinedByPatient_${idX}`, '0');
+                                            setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'CONFIRMED' } : x)));
+                                          } catch(_) {}
+                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: String(a._id || a.id), actor: 'patient', event: 'exit' }); } catch(_) {}
+                                          try {
+                                            const idX = String(a._id || a.id);
+                                            const mon = meetMonitorRef.current[idX];
+                                            if (mon) { clearInterval(mon); meetMonitorRef.current[idX] = null; }
+                                            const w = meetWinRef.current[idX];
+                                            if (w && !w.closed) { w.close(); }
+                                            meetWinRef.current[idX] = null;
+                                          } catch(_) {}
+                                        }}
+                                        className="border border-red-600 text-red-700 px-3 py-1 rounded-md"
+                                      >
+                                        Leave
+                                      </button>
+                                    );
                                   }
                                   if (leftPatient) {
                                     return (

@@ -98,10 +98,10 @@ function Header() {
                 />
               )}
               {open && (
-                <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-md shadow-md text-sm">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg text-sm z-50 overflow-hidden">
                   <Link to="/profile" className="block px-3 py-2 hover:bg-slate-50">My Profile</Link>
                   <Link to="/appointments" className="block px-3 py-2 hover:bg-slate-50">My Appointments</Link>
-                  
+                  <Link to="/appointments?view=prescriptions" className="block px-3 py-2 hover:bg-slate-50">Prescriptions</Link>
                   <button
                     onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); nav('/login'); }}
                     className="block w-full text-left px-3 py-2 hover:bg-slate-50"
