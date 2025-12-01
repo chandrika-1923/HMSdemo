@@ -180,7 +180,16 @@ export default function AdminAddDoctor() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Slot Duration (mins)</label>
-              <input name="slotDurationMins" inputMode="numeric" value={form.slotDurationMins} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-1" placeholder="e.g., 15" />
+              <select
+                name="slotDurationMins"
+                value={form.slotDurationMins}
+                onChange={onChange}
+                className="border border-slate-300 rounded-md p-2 w-full mb-1"
+              >
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+              </select>
               {errors.slot ? (<div className="text-red-600 text-xs mb-3">{errors.slot}</div>) : (<div className="mb-3" />)}
             </div>
           </div>
